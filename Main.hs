@@ -18,7 +18,7 @@ vertShaderFile :: FilePath
 vertShaderFile = "shader.vert"
 
 fragShaderFile :: FilePath
-fragShaderFile = "random.frag"
+fragShaderFile = "epic-animation.frag"
 
 uResolution :: String
 uResolution = "u_resolution"
