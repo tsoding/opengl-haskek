@@ -26,7 +26,7 @@ uResolution :: String
 uResolution = "u_resolution"
 
 uMousePosition :: String
-uMousePosition = "u_mouse_position"
+uMousePosition = "u_mouse"
 
 backgroundColor :: Color4 GLfloat
 backgroundColor = Color4 0.0 0.0 0.0 1.0
