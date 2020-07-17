@@ -10,17 +10,14 @@ import Data.Int
 
 data State = State
   { stateProg :: Program
-  , statePosition :: IORef (Vector2 GLfloat)
+  , stateTime :: IORef Float
   }
 
 vertShaderFile :: FilePath
 vertShaderFile = "shader.vert"
 
 fragShaderFile :: FilePath
-fragShaderFile = "random.frag"
-
-objectPositionUniform :: String
-objectPositionUniform = "objectPosition"
+fragShaderFile = "gradient.frag"
 
 uResolution :: String
 uResolution = "u_resolution"
@@ -28,15 +25,16 @@ uResolution = "u_resolution"
 uMousePosition :: String
 uMousePosition = "u_mouse"
 
+uTime :: String
+uTime = "u_time"
+
 backgroundColor :: Color4 GLfloat
 backgroundColor = Color4 0.0 0.0 0.0 1.0
 
 display :: State -> DisplayCallback
-display State {stateProg = prog, statePosition = positionRef} = do
+display State {stateProg = prog} = do
   clearColor $= backgroundColor
   clear [ColorBuffer, DepthBuffer]
-  position <- readIORef positionRef
-  setUniform prog objectPositionUniform position
   drawArrays Quads 0 8
   flush
   swapBuffers
@@ -50,9 +48,10 @@ timerFrequencyMillis :: Timeout
 timerFrequencyMillis = 20
 
 timer :: State -> TimerCallback
-timer state@(State {statePosition = positionRef}) = do
-  position <- readIORef positionRef
-  modifyIORef positionRef (fmap (+ objectVelocity))
+timer state@State {stateProg = prog, stateTime = timeRef} = do
+  time <- readIORef timeRef
+  setUniform prog uTime time
+  modifyIORef' timeRef $ \time -> time + 1.0 / fromIntegral timerFrequencyMillis
   postRedisplay Nothing
   addTimerCallback timerFrequencyMillis (timer state)
 
@@ -122,9 +121,9 @@ main = do
   vs <- readAndCompileShader VertexShader vertShaderFile
   fs <- readAndCompileShader FragmentShader fragShaderFile
   prog <- installShaders [vs, fs]
-  state <-
-    do position <- newIORef $ Vector2 0.0 0.0
-       return $ State prog position
+  state <- do
+    time <- newIORef 0.0
+    return $ State prog time
   setUniform
     prog
     uResolution
