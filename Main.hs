@@ -64,7 +64,7 @@ motion State {stateProg = progRef} (Position x y) = do
     Vector2 (fromIntegral x :: GLfloat) (fromIntegral y :: GLfloat)
 
 timerFrequencyMillis :: Timeout
-timerFrequencyMillis = 20
+timerFrequencyMillis = 16
 
 timer :: State -> TimerCallback
 timer state@State {stateProg = progRef, stateTime = timeRef} = do
