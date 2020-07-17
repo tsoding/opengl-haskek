@@ -7,9 +7,10 @@ import Control.Monad
 import Text.Printf
 import Data.IORef
 import Data.Int
+import Data.Maybe
 
 data State = State
-  { stateProg :: Program
+  { stateProg :: IORef (Maybe Program)
   , stateTime :: IORef Float
   }
 
@@ -17,7 +18,7 @@ vertShaderFile :: FilePath
 vertShaderFile = "shader.vert"
 
 fragShaderFile :: FilePath
-fragShaderFile = "gradient.frag"
+fragShaderFile = "random.frag"
 
 uResolution :: String
 uResolution = "u_resolution"
@@ -32,24 +33,43 @@ backgroundColor :: Color4 GLfloat
 backgroundColor = Color4 0.0 0.0 0.0 1.0
 
 display :: State -> DisplayCallback
-display State {stateProg = prog} = do
+display State {stateProg = progRef} = do
+  prog <- readIORef progRef
+  setUniform
+    prog
+    uResolution
+    (Vector2
+       (fromIntegral windowWidth :: GLfloat)
+       (fromIntegral windowHeight :: GLfloat))
+
   clearColor $= backgroundColor
   clear [ColorBuffer, DepthBuffer]
   drawArrays Quads 0 8
   flush
   swapBuffers
 
+keyboard :: State -> KeyboardCallback
+keyboard state@State{stateProg = progRef} 'r' _ = do
+  prog <- readIORef progRef
+  currentProgram $= Nothing
+  deleteObjectNames $ maybeToList prog
+  newProg <- reloadShaders
+  writeIORef progRef newProg
+keyboard _ _ _ = return ()
+
 motion :: State -> MotionCallback
-motion State {stateProg = prog} (Position x y) =
+motion State {stateProg = progRef} (Position x y) = do
+  prog <- readIORef progRef
   setUniform prog uMousePosition $
-  Vector2 (fromIntegral x :: GLfloat) (fromIntegral y :: GLfloat)
+    Vector2 (fromIntegral x :: GLfloat) (fromIntegral y :: GLfloat)
 
 timerFrequencyMillis :: Timeout
 timerFrequencyMillis = 20
 
 timer :: State -> TimerCallback
-timer state@State {stateProg = prog, stateTime = timeRef} = do
+timer state@State {stateProg = progRef, stateTime = timeRef} = do
   time <- readIORef timeRef
+  prog <- readIORef progRef
   setUniform prog uTime time
   modifyIORef' timeRef $ \time -> time + 1.0 / fromIntegral timerFrequencyMillis
   postRedisplay Nothing
@@ -70,11 +90,12 @@ readAndCompileShader st filePath = do
     ioError (userError "shader compilation failed")
   return shader
 
-setUniform :: Uniform a => Program -> String -> a -> IO ()
-setUniform prog var val = do
+setUniform :: Uniform a => Maybe Program -> String -> a -> IO ()
+setUniform (Just prog) var val = do
   location <- uniformLocation prog var
   reportErrors
   uniform location $= val
+setUniform Nothing _ _ = return ()
 
 objectVelocity :: GLfloat
 objectVelocity = 0.01
@@ -111,6 +132,18 @@ windowWidth = 800
 windowHeight :: Int32
 windowHeight = 480
 
+reloadShaders :: IO (Maybe Program)
+reloadShaders =
+  catch
+    (do currentProgram $= Nothing
+        vs <- readAndCompileShader VertexShader vertShaderFile
+        fs <- readAndCompileShader FragmentShader fragShaderFile
+        prog <- installShaders [vs, fs]
+        return $ Just prog)
+    (\e -> do
+       print (e :: IOException)
+       return Nothing)
+
 main :: IO ()
 main = do
   _ <- getArgsAndInitialize
@@ -118,20 +151,14 @@ main = do
   initialWindowSize $= Size windowWidth windowHeight
   _ <- createWindow "if it compiles, it twerks haHAA"
   checkGLSLSupport
-  vs <- readAndCompileShader VertexShader vertShaderFile
-  fs <- readAndCompileShader FragmentShader fragShaderFile
-  prog <- installShaders [vs, fs]
+  prog <- reloadShaders
   state <- do
-    time <- newIORef 0.0
-    return $ State prog time
-  setUniform
-    prog
-    uResolution
-    (Vector2
-       (fromIntegral windowWidth :: GLfloat)
-       (fromIntegral windowHeight :: GLfloat))
+    timeRef <- newIORef 0.0
+    progRef <- newIORef prog
+    return $ State progRef timeRef
   displayCallback $= display state
   motionCallback $= Just (motion state)
+  keyboardCallback $= Just (keyboard state)
   addTimerCallback timerFrequencyMillis (timer state)
   mainLoop
 
