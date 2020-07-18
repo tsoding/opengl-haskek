@@ -21,4 +21,4 @@ Expected in `CWD`. See the [pipeline.conf](./pipeline.conf) for a usage example.
 
 |Key|Description|
 |---|---|
-|<kbd>r</kbd>|Hot reload `pipeline.conf` and the shaders it refers to|
+|<kbd>r</kbd>|Hot reload [`pipeline.conf`](#pipelineconf) and the shaders it refers to|
