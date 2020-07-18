@@ -95,9 +95,6 @@ setUniform (Just prog) var val = do
   uniform location $= val
 setUniform Nothing _ _ = return ()
 
-objectVelocity :: GLfloat
-objectVelocity = 0.01
-
 installShaders :: [Shader] -> IO Program
 installShaders shaders = do
   prog <- createProgram
