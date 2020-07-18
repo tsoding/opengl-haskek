@@ -8,7 +8,7 @@ $ cabal v2-run
 
 ## pipeline.conf
 
-Expected in `CWD`. See the [pipeline.conf](./pipeline.conf) for a usage example.
+Expected in [CWD]. See the [pipeline.conf](./pipeline.conf) for a usage example.
 
 ### Parameters
 
@@ -37,3 +37,4 @@ These are [uniforms] that are passed to the shaders specified in
 |`u_time`|How much time has passed in seconds|
 
 [uniforms]: https://www.khronos.org/opengl/wiki/Uniform_(GLSL)
+[CWD]: https://en.wikipedia.org/wiki/Working_directory
