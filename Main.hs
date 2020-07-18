@@ -8,6 +8,8 @@ import Text.Printf
 import Data.IORef
 import Data.Int
 import Data.Maybe
+import qualified Data.Text as T
+import qualified Data.Text.IO as T
 
 data State = State
   { stateProg :: IORef (Maybe Program)
@@ -15,10 +17,10 @@ data State = State
   }
 
 vertShaderFile :: FilePath
-vertShaderFile = "shader.vert"
+vertShaderFile = "shaders/shader.vert"
 
 fragShaderFile :: FilePath
-fragShaderFile = "epic-animation.frag"
+fragShaderFile = "shaders/epic-animation.frag"
 
 uResolution :: String
 uResolution = "u_resolution"
@@ -161,39 +163,3 @@ main = do
   keyboardCallback $= Just (keyboard state)
   addTimerCallback timerFrequencyMillis (timer state)
   mainLoop
-
-------------------------------
-
-clamp :: Ord a => a -> a -> a -> a
-clamp x low high = min (max low x) high
-
-roughstep :: Float -> Float -> Float -> Float
-roughstep edge0 edge1 x = t
-    where t = clamp ((x - edge0) / (edge1 - edge0)) 0.0 1.0
-
-smoothstep :: Float -> Float -> Float -> Float
-smoothstep edge0 edge1 x = t * t * (3.0 - 2.0 * t)
-    where t = clamp ((x - edge0) / (edge1 - edge0)) 0.0 1.0
-
-edge0 :: Float
-edge0 = 0.0
-
-edge1 :: Float
-edge1 = 200.0
-
-xs :: [Float]
-xs = [edge0 .. edge1]
-
-roughYs :: [(Float, Float)]
-roughYs = zip xs (map (roughstep edge0 edge1) xs)
-
-smoothYs :: [(Float, Float)]
-smoothYs = zip xs (map (smoothstep edge0 edge1) xs)
-
-renderYs :: [(Float, Float)] -> String
-renderYs ys = unlines $ map (\(x, y) -> printf "%f,%f" x y) ys
-
-dumpYs :: IO ()
-dumpYs = do
-  writeFile "rough.csv" $ renderYs roughYs
-  writeFile "smooth.csv" $ renderYs smoothYs
