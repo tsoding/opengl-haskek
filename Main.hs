@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Main where
 
 import Graphics.UI.GLUT
@@ -10,17 +11,12 @@ import Data.Int
 import Data.Maybe
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
+import Data.List
 
 data State = State
   { stateProg :: IORef (Maybe Program)
   , stateTime :: IORef Float
   }
-
-vertShaderFile :: FilePath
-vertShaderFile = "shaders/shader.vert"
-
-fragShaderFile :: FilePath
-fragShaderFile = "shaders/epic-animation.frag"
 
 uResolution :: String
 uResolution = "u_resolution"
@@ -137,7 +133,10 @@ windowHeight = 480
 reloadShaders :: IO (Maybe Program)
 reloadShaders =
   catch
-    (do currentProgram $= Nothing
+    (do pcProbably <- readPcFromFile "./pipeline.conf"
+        PipelineConf {pcVert = vertShaderFile, pcFrag = fragShaderFile} <-
+          either (ioError . userError . T.unpack) return pcProbably
+        currentProgram $= Nothing
         vs <- readAndCompileShader VertexShader vertShaderFile
         fs <- readAndCompileShader FragmentShader fragShaderFile
         prog <- installShaders [vs, fs]
@@ -145,6 +144,26 @@ reloadShaders =
     (\e -> do
        print (e :: IOException)
        return Nothing)
+
+data PipelineConf = PipelineConf
+  { pcVert :: FilePath
+  , pcFrag :: FilePath
+  } deriving Show
+
+pcDefault :: PipelineConf
+pcDefault = PipelineConf "" ""
+
+parsePcToken :: [T.Text] -> PipelineConf -> Either T.Text PipelineConf
+parsePcToken [] pc = Right pc
+parsePcToken ["vertex", filePath] pc = Right pc { pcVert = T.unpack filePath }
+parsePcToken ["fragment", filePath] pc = Right pc { pcFrag = T.unpack filePath }
+parsePcToken (token:_) _ = Left $ "Unexpected token `" <> token <> "`"
+
+readPcFromFile :: FilePath -> IO (Either T.Text PipelineConf)
+readPcFromFile filePath = do
+  content <- T.readFile filePath
+  let tokens = map (map T.strip . T.splitOn ":") $ T.lines content
+  return $ foldl' (>>=) (return pcDefault) $ map parsePcToken tokens
 
 main :: IO ()
 main = do
