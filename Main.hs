@@ -53,6 +53,7 @@ keyboard state@State{stateProg = progRef} 'r' _ = do
   deleteObjectNames $ maybeToList prog
   newProg <- reloadShaders
   writeIORef progRef newProg
+keyboard _ 'q' _ = leaveMainLoop
 keyboard _ _ _ = return ()
 
 motion :: State -> MotionCallback
