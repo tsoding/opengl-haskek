@@ -47,13 +47,15 @@ display State {stateProg = progRef} = do
   swapBuffers
 
 keyboard :: State -> KeyboardCallback
-keyboard state@State{stateProg = progRef} 'r' _ = do
+keyboard State{stateProg = progRef} 'r' _ = do
   prog <- readIORef progRef
   currentProgram $= Nothing
   deleteObjectNames $ maybeToList prog
   newProg <- reloadShaders
   writeIORef progRef newProg
 keyboard _ 'q' _ = leaveMainLoop
+keyboard State{stateTime = timeRef} 't' _ =
+  modifyIORef timeRef (const 0)
 keyboard _ _ _ = return ()
 
 motion :: State -> MotionCallback

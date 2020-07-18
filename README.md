@@ -23,6 +23,7 @@ Expected in `CWD`. See the [pipeline.conf](./pipeline.conf) for a usage example.
 |---|---|
 |<kbd>r</kbd>|Hot reload [`pipeline.conf`](#pipelineconf) and the shaders it refers to|
 |<kbd>q</kbd>|Quit the application|
+|<kbd>t</kbd>|Reset [`u_time`](#uniforms) uniform to `0`|
 
 ## Uniforms
 
