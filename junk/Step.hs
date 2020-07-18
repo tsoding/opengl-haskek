@@ -3,7 +3,7 @@ Module: Step
 Description: Attempts at understanding smoothstep
 
 Quick Start:
-1. $ runghci Step.hs
+1. $ runghc Step.hs
 2. $ feh rough.png
 3. $ feh smooth.png
 -}
